@@ -67,12 +67,35 @@ describe('locations API', () => {
         condition: 'Cloudy',
         area: 'Bishan',
         temperature_c: 29,
+        psi_twenty_four_hourly: 42,
+        pm25_one_hourly: 9,
+        air_quality_region: 'central',
       },
     });
 
     const listResponse = await request(app).get('/api/locations').expect(200);
     expect(listResponse.body.locations).toHaveLength(1);
     expect(listResponse.body.locations[0].weather.condition).toBe('Cloudy');
+    expect(listResponse.body.locations[0].weather.psi_twenty_four_hourly).toBe(42);
+  });
+
+  it('returns air quality data after a weather refresh', async () => {
+    const createResponse = await request(app)
+      .post('/api/locations')
+      .send({ latitude: 1.32, longitude: 103.78 })
+      .expect(201);
+
+    const id = createResponse.body.id as number;
+
+    const refreshResponse = await request(app)
+      .post(`/api/locations/${id}/refresh`)
+      .expect(200);
+
+    expect(refreshResponse.body.weather).toMatchObject({
+      psi_twenty_four_hourly: 42,
+      pm25_one_hourly: 9,
+      air_quality_region: 'central',
+    });
   });
 
   it('deletes a location and returns 204', async () => {
