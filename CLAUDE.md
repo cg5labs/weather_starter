@@ -48,11 +48,11 @@ Global app state lives in `frontend/src/state/store.tsx` (React context). API ca
 
 ## Environment Variables
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `PORT` | `3000` | Express listen port |
-| `DATABASE_PATH` | `./backend/weather.db` | SQLite file path |
-| `WEATHER_API_KEY` | — | Optional; passed as `x-api-key` header to data.gov.sg |
-| `PORTLESS_PORT` | `1355` | Public `.localhost` port |
-| `PORTLESS_HTTPS` | `0` | Enable HTTPS in Portless |
-| `LOG_LEVEL` | — | Pino log level (set to `silent` in tests) |
+| Variable          | Default                | Purpose                                               |
+| ----------------- | ---------------------- | ----------------------------------------------------- |
+| `PORT`            | `3000`                 | Express listen port                                   |
+| `DATABASE_PATH`   | `./backend/weather.db` | SQLite file path                                      |
+| `WEATHER_API_KEY` | —                      | Optional; passed as `x-api-key` header to data.gov.sg |
+| `PORTLESS_PORT`   | `1355`                 | Public `.localhost` port                              |
+| `PORTLESS_HTTPS`  | `0`                    | Enable HTTPS in Portless                              |
+| `LOG_LEVEL`       | —                      | Pino log level (set to `silent` in tests)             |

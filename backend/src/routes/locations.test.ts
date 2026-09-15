@@ -23,7 +23,9 @@ const weather: WeatherSnapshot = {
   pm25_one_hourly: 9,
   air_quality_region: 'central',
   forecast_periods: [{ label: 'Now', forecast: 'Cloudy' }],
-  daily_forecast: [{ date: '2026-05-04', forecast: 'Cloudy', temperature_low_c: 25, temperature_high_c: 32 }],
+  daily_forecast: [
+    { date: '2026-05-04', forecast: 'Cloudy', temperature_low_c: 25, temperature_high_c: 32 },
+  ],
 };
 
 describe('locations API', () => {
@@ -87,9 +89,7 @@ describe('locations API', () => {
 
     const id = createResponse.body.id as number;
 
-    const refreshResponse = await request(app)
-      .post(`/api/locations/${id}/refresh`)
-      .expect(200);
+    const refreshResponse = await request(app).post(`/api/locations/${id}/refresh`).expect(200);
 
     expect(refreshResponse.body.weather).toMatchObject({
       psi_twenty_four_hourly: 42,

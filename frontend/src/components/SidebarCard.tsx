@@ -50,7 +50,12 @@ export function SidebarCard({ location, isHome }: SidebarCardProps) {
         aria-label={`Remove ${area}`}
         className="absolute right-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded-full text-white/40 transition hover:bg-white/20 hover:text-white/90"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" fill="currentColor" className="h-3 w-3">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 12 12"
+          fill="currentColor"
+          className="h-3 w-3"
+        >
           <path d="M1.47 1.47a.75.75 0 0 1 1.06 0L6 4.94l3.47-3.47a.75.75 0 1 1 1.06 1.06L7.06 6l3.47 3.47a.75.75 0 1 1-1.06 1.06L6 7.06 2.53 10.53a.75.75 0 0 1-1.06-1.06L4.94 6 1.47 2.53a.75.75 0 0 1 0-1.06Z" />
         </svg>
       </button>

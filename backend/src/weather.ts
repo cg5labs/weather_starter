@@ -171,7 +171,10 @@ export interface WeatherSnapshot {
 }
 
 export class SingaporeWeatherClient {
-  private readonly snapshotCache = new Map<string, { snapshot: WeatherSnapshot; fetchedAt: number }>();
+  private readonly snapshotCache = new Map<
+    string,
+    { snapshot: WeatherSnapshot; fetchedAt: number }
+  >();
   private readonly cacheTtlMs: number;
 
   constructor(
@@ -204,18 +207,37 @@ export class SingaporeWeatherClient {
     }
 
     const none = { value: null, timestamp: null };
-    const [temp, humidity, rainfall, windSpeed, windDir, uv, airQuality, forecast24hr, forecast4day] =
-      await Promise.all([
-        this.fetchNearestReading('air-temperature', latitude, longitude).catch(() => none),
-        this.fetchNearestReading('relative-humidity', latitude, longitude).catch(() => none),
-        this.fetchNearestReading('rainfall', latitude, longitude).catch(() => none),
-        this.fetchNearestReading('wind-speed', latitude, longitude).catch(() => none),
-        this.fetchNearestReading('wind-direction', latitude, longitude).catch(() => none),
-        this.fetchUvIndex().catch(() => none),
-        this.fetchAirQuality(latitude, longitude).catch(() => ({ psi: null, pm25: null, region: null, timestamp: null })),
-        this.fetchTwentyFourHourForecast(latitude, longitude).catch(() => ({ low: null, high: null, periods: [], timestamp: null })),
-        this.fetchFourDayForecast().catch(() => ({ days: [], timestamp: null })),
-      ]);
+    const [
+      temp,
+      humidity,
+      rainfall,
+      windSpeed,
+      windDir,
+      uv,
+      airQuality,
+      forecast24hr,
+      forecast4day,
+    ] = await Promise.all([
+      this.fetchNearestReading('air-temperature', latitude, longitude).catch(() => none),
+      this.fetchNearestReading('relative-humidity', latitude, longitude).catch(() => none),
+      this.fetchNearestReading('rainfall', latitude, longitude).catch(() => none),
+      this.fetchNearestReading('wind-speed', latitude, longitude).catch(() => none),
+      this.fetchNearestReading('wind-direction', latitude, longitude).catch(() => none),
+      this.fetchUvIndex().catch(() => none),
+      this.fetchAirQuality(latitude, longitude).catch(() => ({
+        psi: null,
+        pm25: null,
+        region: null,
+        timestamp: null,
+      })),
+      this.fetchTwentyFourHourForecast(latitude, longitude).catch(() => ({
+        low: null,
+        high: null,
+        periods: [],
+        timestamp: null,
+      })),
+      this.fetchFourDayForecast().catch(() => ({ days: [], timestamp: null })),
+    ]);
 
     const snapshot: WeatherSnapshot = {
       ...base,
@@ -608,7 +630,6 @@ function valueForRegion(
   if (!values || !region) return null;
   return numberOrNull(values[region]);
 }
-
 
 function defaultRegions(): RegionMetadata[] {
   return [

@@ -82,7 +82,6 @@ export async function createApp(options: AppOptions = {}) {
       error: unknown,
       _request: express.Request,
       response: express.Response,
-      _next: express.NextFunction,
     ) => {
       logger.error({ err: error }, 'request failed');
       response.status(500).json({ detail: 'Internal server error' });
