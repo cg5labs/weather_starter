@@ -171,20 +171,70 @@ export interface WeatherSnapshot {
 }
 
 export class SingaporeWeatherClient {
+  private readonly snapshotCache = new Map<string, { snapshot: WeatherSnapshot; fetchedAt: number }>();
+  private readonly cacheTtlMs: number;
+
   constructor(
     private readonly options: {
       baseUrl?: string;
       apiKey?: string;
       timeoutMs?: number;
       userAgent?: string;
+      cacheTtlMs?: number;
     } = {},
-  ) {}
+  ) {
+    this.cacheTtlMs = options.cacheTtlMs ?? 30_000;
+  }
 
   async getCurrentWeather(latitude: number, longitude: number): Promise<WeatherSnapshot> {
+    const cacheKey = `${latitude},${longitude}`;
+    const cached = this.snapshotCache.get(cacheKey);
+    if (cached && Date.now() - cached.fetchedAt < this.cacheTtlMs) {
+      return cached.snapshot;
+    }
+
     const forecastPayload = await this.fetchLatestForecastPayload().catch(() => null);
-    return forecastPayload
-      ? this.snapshotFromPayload(forecastPayload, latitude, longitude)
-      : this.emptyForecastSnapshot();
+    if (!forecastPayload) return this.emptyForecastSnapshot();
+
+    let base: WeatherSnapshot;
+    try {
+      base = this.snapshotFromPayload(forecastPayload, latitude, longitude);
+    } catch {
+      return this.emptyForecastSnapshot();
+    }
+
+    const none = { value: null, timestamp: null };
+    const [temp, humidity, rainfall, windSpeed, windDir, uv, airQuality, forecast24hr, forecast4day] =
+      await Promise.all([
+        this.fetchNearestReading('air-temperature', latitude, longitude).catch(() => none),
+        this.fetchNearestReading('relative-humidity', latitude, longitude).catch(() => none),
+        this.fetchNearestReading('rainfall', latitude, longitude).catch(() => none),
+        this.fetchNearestReading('wind-speed', latitude, longitude).catch(() => none),
+        this.fetchNearestReading('wind-direction', latitude, longitude).catch(() => none),
+        this.fetchUvIndex().catch(() => none),
+        this.fetchAirQuality(latitude, longitude).catch(() => ({ psi: null, pm25: null, region: null, timestamp: null })),
+        this.fetchTwentyFourHourForecast(latitude, longitude).catch(() => ({ low: null, high: null, periods: [], timestamp: null })),
+        this.fetchFourDayForecast().catch(() => ({ days: [], timestamp: null })),
+      ]);
+
+    const snapshot: WeatherSnapshot = {
+      ...base,
+      temperature_c: temp.value,
+      humidity_percent: humidity.value,
+      rainfall_mm: rainfall.value,
+      wind_speed_knots: windSpeed.value,
+      wind_direction_degrees: windDir.value,
+      forecast_low_c: forecast24hr.low,
+      forecast_high_c: forecast24hr.high,
+      uv_index: uv.value,
+      psi_twenty_four_hourly: airQuality.psi,
+      pm25_one_hourly: airQuality.pm25,
+      air_quality_region: airQuality.region,
+      forecast_periods: forecast24hr.periods,
+      daily_forecast: forecast4day.days,
+    };
+    this.snapshotCache.set(cacheKey, { snapshot, fetchedAt: Date.now() });
+    return snapshot;
   }
 
   async fetchLatestForecastPayload(): Promise<ForecastPayload> {
