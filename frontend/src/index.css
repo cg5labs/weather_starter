@@ -41,3 +41,76 @@ input:focus-visible {
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* ── Map pin markers ─────────────────────────────────────────── */
+.map-pin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translate(-50%, -100%);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.map-pin__bubble {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 11px;
+  line-height: 1.4;
+  color: #fff;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+}
+
+.map-pin__temp {
+  font-weight: 600;
+}
+
+.map-pin__cond {
+  font-weight: 400;
+  opacity: 0.85;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.map-pin__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  margin-top: 3px;
+}
+
+/* Selected location pin */
+.map-pin--selected .map-pin__bubble {
+  background: rgba(255, 255, 255, 0.32);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.map-pin--selected .map-pin__dot {
+  width: 9px;
+  height: 9px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5), 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Fullscreen overlay: re-enable pointer events on pins */
+.map-overlay .map-pin {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Shrink attribution text on the card view */
+.map-card-view .leaflet-control-attribution {
+  font-size: 8px;
+  opacity: 0.45;
+  background: transparent;
+  box-shadow: none;
+}
