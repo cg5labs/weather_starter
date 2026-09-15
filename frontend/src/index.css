@@ -114,3 +114,40 @@ input:focus-visible {
   background: transparent;
   box-shadow: none;
 }
+
+/* Hide Leaflet shadow pane to prevent visual artifacts during initialization */
+.leaflet-shadow-pane {
+  display: none !important;
+}
+
+/* Hide popup pane which might render with background opacity */
+.leaflet-popup-pane {
+  display: none !important;
+}
+
+/* Contain all Leaflet panes within map card bounds with low z-index */
+.map-card-view .leaflet-pane {
+  z-index: auto !important;
+  background: transparent !important;
+  opacity: 1 !important;
+}
+
+/* Ensure map container doesn't escape its overflow-hidden bounds */
+.map-card-view .leaflet-container {
+  z-index: 0 !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* Fullscreen overlay: ensure it and its button are visible */
+.map-overlay {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.map-overlay button {
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 500 !important;
+}

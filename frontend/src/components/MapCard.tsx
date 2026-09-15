@@ -80,11 +80,12 @@ export function MapCard() {
       <section
         ref={cardRef}
         className="map-card-view relative h-[250px] overflow-hidden rounded-2xl border border-white/15"
+        style={{ zIndex: 'auto' }}
       >
         <MapContainer
           center={SG_CENTER}
           zoom={CARD_ZOOM}
-          style={{ height: '100%', width: '100%' }}
+          style={{ height: '100%', width: '100%', overflow: 'hidden' }}
           dragging={false}
           touchZoom={false}
           doubleClickZoom={false}
@@ -123,7 +124,15 @@ export function MapCard() {
       {/* absolute (not fixed): fills the Hero pane only — Hero's <main> is
           the nearest `relative` ancestor, so this never covers the Sidebar. */}
       {isFullscreen && (
-        <div className="map-overlay absolute inset-0 z-50">
+        <div
+          className="map-overlay absolute inset-0 z-50"
+          onClick={(e) => {
+            // Close on background click, but not when clicking pins or controls
+            if (e.target === e.currentTarget) {
+              setIsFullscreen(false);
+            }
+          }}
+        >
           <MapContainer
             center={SG_CENTER}
             zoom={FULL_ZOOM}

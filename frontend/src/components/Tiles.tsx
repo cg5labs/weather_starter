@@ -1,4 +1,4 @@
-import { CloudIcon, DropletIcon, SunIcon, ThermometerIcon, TrendIcon, WindIcon } from './icons';
+import { CloudIcon, DropletIcon, SunIcon, ThermometerIcon, WindIcon } from './icons';
 import type { ReactNode } from 'react';
 import type { WeatherSnapshot } from '../types';
 
@@ -225,25 +225,6 @@ export function HumidityTile({ weather }: WeatherProps) {
   );
 }
 
-export function AveragesTile({ weather }: WeatherProps) {
-  return (
-    <TileShell icon={<TrendIcon />} title="Forecast High">
-      <div className="text-4xl font-light leading-none tabular-nums text-white/95">
-        {formatTemperature(weather?.forecast_high_c)}&deg;
-      </div>
-      <div className="mt-1 text-xs leading-snug text-white/75">
-        Today&apos;s high from the 24-hour forecast.
-      </div>
-      <ul className="mt-3 space-y-1 text-xs text-white/70">
-        <li className="flex justify-between border-t border-white/10 pt-1.5">
-          <span>Today</span>
-          <span className="tabular-nums">H:{formatTemperature(weather?.forecast_high_c)}&deg;</span>
-        </li>
-      </ul>
-    </TileShell>
-  );
-}
-
 export function TileGrid({ weather }: WeatherProps) {
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -253,7 +234,6 @@ export function TileGrid({ weather }: WeatherProps) {
       <TemperatureTile weather={weather} />
       <PrecipitationTile weather={weather} />
       <HumidityTile weather={weather} />
-      <AveragesTile weather={weather} />
     </div>
   );
 }
