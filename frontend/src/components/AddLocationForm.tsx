@@ -20,32 +20,51 @@ export function AddLocationForm() {
   const handleUseLocation = async () => {
     setSubmitting(true);
     setSubmitError(null);
+
+    const doIpFallback = async () => {
+      const res = await fetch('https://ipapi.co/json/');
+      if (!res.ok) throw new Error('IP location lookup failed');
+      const data = await res.json();
+      const lat = Number(data.latitude ?? data.lat);
+      const lon = Number(data.longitude ?? data.lon);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error('Could not determine location from IP');
+      await create({ latitude: lat, longitude: lon });
+    };
+
     try {
       if (typeof navigator !== 'undefined' && navigator.geolocation) {
-        const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: false,
-            timeout: 10000,
-            maximumAge: 600000,
-          }),
-        );
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        await create({ latitude: lat, longitude: lon });
-        setLatitude('');
-        setLongitude('');
+        try {
+          const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: false,
+              timeout: 10000,
+              maximumAge: 600000,
+            }),
+          );
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          await create({ latitude: lat, longitude: lon });
+          setLatitude('');
+          setLongitude('');
+          return;
+        } catch (geoErr) {
+          // If geolocation fails (permission, timeout, insecure origin), try IP fallback before giving up
+          try {
+            await doIpFallback();
+            return;
+          } catch (ipErr) {
+            const geoMsg = (geoErr as any)?.message ?? `Geolocation error code ${(geoErr as any)?.code ?? 'unknown'}`;
+            const ipMsg = (ipErr as any)?.message ?? 'IP fallback failed';
+            throw new Error(`${geoMsg}; ${ipMsg}`);
+          }
+        }
       } else {
-        // Fallback: try an IP-based geolocation service for non-secure contexts
-        const res = await fetch('https://ipapi.co/json/');
-        if (!res.ok) throw new Error('Location detection failed');
-        const data = await res.json();
-        const lat = Number(data.latitude ?? data.lat);
-        const lon = Number(data.longitude ?? data.lon);
-        if (!lat || !lon) throw new Error('Could not determine location from IP');
-        await create({ latitude: lat, longitude: lon });
+        await doIpFallback();
+        return;
       }
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Could not detect location');
+      const msg = (err as any)?.message ?? 'Could not detect location';
+      setSubmitError(msg);
     } finally {
       setSubmitting(false);
     }
