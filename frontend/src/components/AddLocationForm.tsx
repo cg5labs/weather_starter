@@ -17,6 +17,40 @@ export function AddLocationForm() {
     setAdding(false);
   };
 
+  const handleUseLocation = async () => {
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      if (typeof navigator !== 'undefined' && navigator.geolocation) {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: false,
+            timeout: 10000,
+            maximumAge: 600000,
+          }),
+        );
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        await create({ latitude: lat, longitude: lon });
+        setLatitude('');
+        setLongitude('');
+      } else {
+        // Fallback: try an IP-based geolocation service for non-secure contexts
+        const res = await fetch('https://ipapi.co/json/');
+        if (!res.ok) throw new Error('Location detection failed');
+        const data = await res.json();
+        const lat = Number(data.latitude ?? data.lat);
+        const lon = Number(data.longitude ?? data.lon);
+        if (!lat || !lon) throw new Error('Could not determine location from IP');
+        await create({ latitude: lat, longitude: lon });
+      }
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Could not detect location');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitting(true);
@@ -80,6 +114,14 @@ export function AddLocationForm() {
         </label>
       </div>
       <div className="flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={handleUseLocation}
+          disabled={submitting}
+          className="rounded-md px-2.5 py-1.5 text-xs font-medium text-white/70 hover:text-white"
+        >
+          {submitting ? 'Detecting…' : 'Use my location'}
+        </button>
         <button
           type="button"
           onClick={cancel}
