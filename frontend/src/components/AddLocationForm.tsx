@@ -22,17 +22,46 @@ export function AddLocationForm() {
     setSubmitError(null);
 
     const doIpFallback = async () => {
-      const res = await fetch('https://ipapi.co/json/');
-      if (!res.ok) throw new Error('IP location lookup failed');
-      const data = await res.json();
-      const lat = Number(data.latitude ?? data.lat);
-      const lon = Number(data.longitude ?? data.lon);
-      if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error('Could not determine location from IP');
-      await create({ latitude: lat, longitude: lon });
+      // ipapi.co sometimes blocks; try ipwho.is as a secondary fallback
+      const providers = ['https://ipapi.co/json/', 'https://ipwho.is/'];
+      let lastErr: Error | null = null;
+      for (const url of providers) {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`IP location lookup failed (${url})`);
+          const data = await res.json();
+          const lat = Number(data.latitude ?? data.lat ?? data.latitude ?? data.latitude);
+          const lon = Number(data.longitude ?? data.lon ?? data.longitude ?? data.longitude);
+          if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error('Could not determine location from IP');
+          await create({ latitude: lat, longitude: lon });
+          return;
+        } catch (e) {
+          lastErr = e instanceof Error ? e : new Error(String(e));
+        }
+      }
+      throw lastErr ?? new Error('IP lookup failed');
     };
 
     try {
-      if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
+        // If Permissions API says geolocation is denied, skip prompt and use IP fallback
+        try {
+          const perms = (navigator as any).permissions;
+          if (perms && typeof perms.query === 'function') {
+            try {
+              const status = await perms.query({ name: 'geolocation' });
+              if (status?.state === 'denied') {
+                await doIpFallback();
+                return;
+              }
+            } catch (e) {
+              // ignore permission query errors and proceed to prompt
+            }
+          }
+        } catch (e) {
+          // ignore and proceed
+        }
+
         try {
           const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
             navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -48,7 +77,7 @@ export function AddLocationForm() {
           setLongitude('');
           return;
         } catch (geoErr) {
-          // If geolocation fails (permission, timeout, insecure origin), try IP fallback before giving up
+          // If geolocation fails (permission, timeout, insecure origin), try IP fallback
           try {
             await doIpFallback();
             return;
