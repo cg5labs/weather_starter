@@ -95,6 +95,34 @@ The app does not call the external weather API on every page load. It uses a sna
 
 ## Project Structure
 
+## Docs (Starlight) & Mermaid
+
+The project ships a documentation workspace in the docs/ folder using Astro + Starlight. Mermaid diagram support is available via the astro-mermaid integration.
+
+- Dev server (hot reload): npm --prefix ./docs run dev — open http://localhost:4321/
+- Build static docs: npm --prefix ./docs run build → output in docs/dist
+- Preview a production build: npm --prefix ./docs run preview
+
+Example pages shipped:
+- / (index) — docs/src/content/docs/index.md
+- /mermaid — docs/src/content/docs/mermaid.md (simple flowchart)
+- /diagrams — docs/src/content/docs/diagrams.md (sequence, gantt, class examples)
+
+Enabling ELK layout support (optional):
+If you want Mermaid to use the ELK layout engine for certain diagram types, install an ELK implementation in the docs workspace and rebuild:
+
+```bash
+npm --prefix ./docs install elkjs
+npm --prefix ./docs run build
+```
+
+astro-mermaid will auto-detect an ELK package and enable the enhanced layout support. If ELK is not installed, astro-mermaid will fall back to the default renderer.
+
+CI: build the docs on push/PR
+A GitHub Actions workflow is included at .github/workflows/docs-build.yml that runs `npm --prefix ./docs run build` on push and pull_request so generated docs are validated in CI.
+
+
+
 ```text
 weather-starter/
 ├── backend/
