@@ -12,11 +12,11 @@ Below are high-level diagrams that show how the development server, frontend, ba
 
 ```mermaid
 flowchart LR
-  Browser[Browser / Frontend] -->|HTTP via Portless| Portless[Portless Proxy]
-  Portless --> Server[Node.js process\nExpress + Vite]
-  Server --> DB[SQLite (backend/weather.db)]
-  Server -->|External APIs| WeatherAPI[api-open.data.gov.sg]
-  Server --> Frontend[In dev: Vite middleware serves frontend]
+  Browser["Browser / Frontend"] -->|HTTP via Portless| Portless["Portless Proxy"]
+  Portless --> Server["Node.js process\nExpress + Vite"]
+  Server --> DB["SQLite (backend/weather.db)"]
+  Server -->|External APIs| WeatherAPI["api-open.data.gov.sg"]
+  Server --> Frontend["In dev: Vite middleware serves frontend"]
   Frontend -->|/api requests| Server
   subgraph Dev
     Portless
