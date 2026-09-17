@@ -21,45 +21,60 @@ export function AddLocationForm() {
     setSubmitting(true);
     setSubmitError(null);
 
+    type IpGeoData = {
+      latitude?: number | string;
+      longitude?: number | string;
+      lat?: number | string;
+      lon?: number | string;
+    };
+
+    type PermissionNavigator = Navigator & {
+      permissions?: {
+        query: (descriptor: PermissionDescriptor) => Promise<{ state: PermissionState }>;
+      };
+    };
+
     const doIpFallback = async () => {
       // ipapi.co sometimes blocks; try ipwho.is as a secondary fallback
       const providers = ['https://ipapi.co/json/', 'https://ipwho.is/'];
       let lastErr: Error | null = null;
+
       for (const url of providers) {
         try {
           const res = await fetch(url);
           if (!res.ok) throw new Error(`IP location lookup failed (${url})`);
-          const data = await res.json();
-          const lat = Number(data.latitude ?? data.lat ?? data.latitude ?? data.latitude);
-          const lon = Number(data.longitude ?? data.lon ?? data.longitude ?? data.longitude);
-          if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error('Could not determine location from IP');
+
+          const data = (await res.json()) as IpGeoData;
+          const lat = Number(data.latitude ?? data.lat ?? Number.NaN);
+          const lon = Number(data.longitude ?? data.lon ?? Number.NaN);
+          if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+            throw new Error('Could not determine location from IP');
+          }
+
           await create({ latitude: lat, longitude: lon });
           return;
-        } catch (e) {
-          lastErr = e instanceof Error ? e : new Error(String(e));
+        } catch (error) {
+          lastErr = error instanceof Error ? error : new Error(String(error));
         }
       }
+
       throw lastErr ?? new Error('IP lookup failed');
     };
 
     try {
       if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
-        // If Permissions API says geolocation is denied, skip prompt and use IP fallback
-        try {
-          const perms = (navigator as any).permissions;
-          if (perms && typeof perms.query === 'function') {
-            try {
-              const status = await perms.query({ name: 'geolocation' });
-              if (status?.state === 'denied') {
-                await doIpFallback();
-                return;
-              }
-            } catch (e) {
-              // ignore permission query errors and proceed to prompt
+        const permissionNavigator = navigator as PermissionNavigator;
+
+        if (permissionNavigator.permissions && typeof permissionNavigator.permissions.query === 'function') {
+          try {
+            const status = await permissionNavigator.permissions.query({ name: 'geolocation' });
+            if (status.state === 'denied') {
+              await doIpFallback();
+              return;
             }
+          } catch {
+            // Ignore permission query errors and proceed to prompt normally.
           }
-        } catch (e) {
-          // ignore and proceed
         }
 
         try {
@@ -77,22 +92,21 @@ export function AddLocationForm() {
           setLongitude('');
           return;
         } catch (geoErr) {
-          // If geolocation fails (permission, timeout, insecure origin), try IP fallback
           try {
             await doIpFallback();
             return;
           } catch (ipErr) {
-            const geoMsg = (geoErr as any)?.message ?? `Geolocation error code ${(geoErr as any)?.code ?? 'unknown'}`;
-            const ipMsg = (ipErr as any)?.message ?? 'IP fallback failed';
+            const geoMsg =
+              geoErr instanceof Error ? geoErr.message : `Geolocation error code ${String(geoErr)}`;
+            const ipMsg = ipErr instanceof Error ? ipErr.message : 'IP fallback failed';
             throw new Error(`${geoMsg}; ${ipMsg}`);
           }
         }
-      } else {
-        await doIpFallback();
-        return;
       }
+
+      await doIpFallback();
     } catch (err) {
-      const msg = (err as any)?.message ?? 'Could not detect location';
+      const msg = err instanceof Error ? err.message : 'Could not detect location';
       setSubmitError(msg);
     } finally {
       setSubmitting(false);
